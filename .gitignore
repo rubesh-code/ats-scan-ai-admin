@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local env files hold the API target only, but never commit them.
+.env
+.env.*
+!.env.example
+!.env.mock
+
+npm-debug.log*
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
