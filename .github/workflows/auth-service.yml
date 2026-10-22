@@ -1,0 +1,73 @@
+# Linux verification for auth-service/.
+#
+# No secrets, no database, no deployment: tests use in-process PGlite with
+# synthetic data, and the socket checks run a harness on the runner itself.
+name: auth-service
+
+on:
+  push:
+    # Feature branches too: workflow_dispatch only works once this file is on
+    # the default branch, so without this a feature push would run nothing.
+    branches: [main, 'feature/**']
+    paths: ['auth-service/**', '.github/workflows/auth-service.yml', '.gitattributes']
+  pull_request:
+    paths: ['auth-service/**', '.github/workflows/auth-service.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auth-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux, Node 22
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: auth-service
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.16.0'
+          cache: npm
+          cache-dependency-path: auth-service/package-lock.json
+
+      - name: Node matches .prototools
+        run: |
+          grep -qx 'node = "22.16.0"' .prototools
+          test "$(node --version)" = v22.16.0
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      # On Linux nothing may be skipped: the POSIX-only tests (Unix socket,
+      # 0600 secret files, stale sockets) must actually run here.
+      - name: Tests, none skipped
+        run: |
+          npx vitest run --reporter=default --reporter=json --outputFile="$RUNNER_TEMP/vitest.json"
+          node -e '
+            const r = require(process.argv[1]);
+            const skipped = r.numPendingTests + r.numTodoTests;
+            if (skipped > 0) { console.error(`${skipped} test(s) were skipped on Linux`); process.exit(1); }
+            console.log(`${r.numPassedTests} passed, none skipped`);
+          ' "$RUNNER_TEMP/vitest.json"
+
+      - run: npm run build
+
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      # Real OS users and systemd: socket 0660/0750, group access for the
+      # nginx stand-in, refusal for everyone else, secret-file and
+      # LoadCredential handling. Creates throwaway users on the runner only.
+      - name: Socket and secret-file access as real users
+        run: sudo CI=true NODE_BIN="$(command -v node)" bash test/linux/socket-access.sh

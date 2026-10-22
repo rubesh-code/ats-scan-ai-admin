@@ -71,4 +71,7 @@ src/
   lib/        formatting, URL-backed filter state
   pages/      one file per dashboard page
 docs/         admin API contract, deployment and rollback
+auth-service/ separate admin authentication service (Node 22, Fastify);
+              built and tested locally, not deployed or wired to the UI yet.
+              See auth-service/README.md
 ```
