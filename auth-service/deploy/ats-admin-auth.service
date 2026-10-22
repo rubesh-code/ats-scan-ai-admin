@@ -1,0 +1,73 @@
+# DRAFT for review. Not installed anywhere.
+#
+# /etc/systemd/system/ats-admin-auth.service
+#
+# The service listens only on a Unix socket, /run/ats-admin-auth/auth.sock:
+#   directory  0750 ats-admin:ats-admin   (created by RuntimeDirectory= below)
+#   socket     0660 ats-admin:ats-admin   (set by the service after listen)
+# Only the service user and members of group ats-admin can connect. The nginx
+# user is made the one other member, so nothing else on the host - including
+# the customer backend - can reach the service or forge X-Forwarded-For.
+#
+# Prerequisites (not yet done):
+#   useradd --system --no-create-home --shell /usr/sbin/nologin ats-admin
+#   usermod -aG ats-admin www-data        # confirm nginx's user first (`ps -o user= -C nginx`)
+#   systemctl restart nginx               # workers only pick up the new group on restart
+#   install -d -m 0755 -o root -g root /opt/ats-admin-auth/releases   # code is root-owned, read-only to the service
+#   install -d -m 0700 -o root -g root /etc/ats-admin-auth
+#   /etc/ats-admin-auth/db-url          0600 root  (the ats_admin_auth_app URL)
+#   /etc/ats-admin-auth/db-ca           0644 root  (the database CA bundle)
+#   /etc/ats-admin-auth/manager-db-url  0600 root  (CLI only; NOT given to the service)
+#
+# Replace /usr/bin/node with the server's Node 22 binary (confirm with `node -v`).
+
+[Unit]
+Description=ATS Scan AI admin authentication service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ats-admin
+Group=ats-admin
+WorkingDirectory=/opt/ats-admin-auth/current
+Environment=NODE_ENV=production
+Environment=ADMIN_AUTH_SOCKET=/run/ats-admin-auth/auth.sock
+Environment=ADMIN_AUTH_ALLOWED_ORIGINS=http://ats-admin.localhost:5070
+RuntimeDirectory=ats-admin-auth
+RuntimeDirectoryMode=0750
+# Copied by systemd into a private, per-service directory ($CREDENTIALS_DIRECTORY);
+# the secrets never appear in the environment or the unit file.
+LoadCredential=db-url:/etc/ats-admin-auth/db-url
+LoadCredential=db-ca:/etc/ats-admin-auth/db-ca
+ExecStart=/usr/bin/node /opt/ats-admin-auth/current/dist/server.js
+Restart=on-failure
+RestartSec=5
+
+# Sandboxing
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# AF_UNIX for the listening socket; AF_INET/AF_INET6 only for the outbound database connection.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+# The socket is created 0600 under this umask and only then opened to 0660.
+UMask=0077
+# V8's JIT needs writable+executable memory, so MemoryDenyWriteExecute stays off.
+
+[Install]
+WantedBy=multi-user.target

@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
+import { configDefaults } from 'vitest/config';
 
 /**
  * The dashboard is served on 127.0.0.1 only. It is never bound to a public
@@ -52,6 +53,8 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
       css: false,
+      // auth-service/ is a separate Node package with its own test runner config.
+      exclude: [...configDefaults.exclude, 'auth-service/**'],
     },
   };
 });
