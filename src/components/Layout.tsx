@@ -1,7 +1,6 @@
 import { NavLink, Outlet } from 'react-router';
 
 import { usingMocks } from '@/api';
-import { useAuth } from '@/auth/AuthProvider';
 
 const NAV = [
   { to: '/', label: 'Overview', end: true },
@@ -13,8 +12,6 @@ const NAV = [
 ];
 
 export function Layout() {
-  const { session, signOut } = useAuth();
-
   return (
     <div className="shell">
       <a href="#main" className="skip-link">
@@ -36,14 +33,6 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="sidebar-foot">
-          <span className="muted small" title={session?.admin.email}>
-            {session?.admin.email}
-          </span>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void signOut()}>
-            Sign out
-          </button>
-        </div>
       </aside>
 
       <div className="content">

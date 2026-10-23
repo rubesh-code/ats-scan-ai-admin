@@ -25,7 +25,10 @@ const errorColumns: Column<BackendError>[] = [
 export function HealthPage() {
   const query = useQuery({
     queryKey: ['health'],
-    queryFn: () => adminApi.health(),
+    // Once there is data, further fetches are the once-a-minute poll (or a
+    // revisit): marked as background so they don't keep the session alive.
+    queryFn: ({ client, queryKey }) =>
+      adminApi.health({ background: client.getQueryData(queryKey) !== undefined }),
     refetchInterval: 60_000,
   });
   const data = query.data;

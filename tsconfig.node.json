@@ -9,7 +9,8 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "isolatedModules": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "dev-proxy.ts", "dev-proxy.test.ts"]
 }

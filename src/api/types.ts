@@ -8,15 +8,21 @@ export type AdminRole = 'owner' | 'admin' | 'viewer';
 
 export type AdminUser = {
   id: string;
-  email: string;
+  username: string;
   role: AdminRole;
 };
 
+/**
+ * What the auth service returns from login and `GET /api/admin/auth/me`. The
+ * session token itself never reaches JavaScript: it lives only in the
+ * HttpOnly `__Host-ats_admin` cookie.
+ */
 export type AdminSession = {
-  token: string;
-  /** ISO timestamp; the dashboard signs out once it passes. */
-  expiresAt: string;
   admin: AdminUser;
+  /** ISO timestamp: the absolute end of the session (8 hours after login). */
+  expiresAt: string;
+  /** ISO timestamp: when the session ends if no further activity reaches the server. */
+  idleExpiresAt: string;
 };
 
 export type RangeKey = '7d' | '30d' | '90d';

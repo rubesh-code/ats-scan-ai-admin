@@ -11,7 +11,7 @@ const FORBIDDEN = [
   { name: 'JWT-shaped token', pattern: /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ },
   { name: 'Razorpay secret reference', pattern: /RAZORPAY_KEY_SECRET|rzp_live_[A-Za-z0-9]{10,}/ },
   { name: 'Private key', pattern: /BEGIN [A-Z ]*PRIVATE KEY/ },
-  { name: 'Mock data module', pattern: /mock-token|Mock mode: any email|example\.com/ },
+  { name: 'Mock data module', pattern: /mock-password|Mock mode:|example\.com/ },
 ];
 
 function files(dir) {
