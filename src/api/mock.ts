@@ -14,10 +14,28 @@ import type {
 /**
  * Development-only sample data, generated from a fixed seed so every reload
  * shows the same numbers. Loaded only when `npm run dev:mock` is used; see
- * src/api/index.ts. Sign in with any email and the code 123456.
+ * src/api/index.ts. Sign in with any username and the password below.
+ *
+ * Auth follows the auth service's contract. The "cookie" is a module-level
+ * flag: nothing is written to storage, and a reload signs you out.
  */
 
-const MOCK_OTP = '123456';
+export const MOCK_PASSWORD = 'mock-password';
+const MOCK_SESSION_MS = 8 * 3_600_000;
+const MOCK_IDLE_MS = 30 * 60_000;
+
+let mockSignedInAs: string | null = null;
+let mockSessionStartedAt = 0;
+
+function mockSession(username: string) {
+  const now = Date.now();
+  const expiresAt = mockSessionStartedAt + MOCK_SESSION_MS;
+  return {
+    admin: { id: 'adm_mock', username, role: 'owner' as const },
+    expiresAt: new Date(expiresAt).toISOString(),
+    idleExpiresAt: new Date(Math.min(now + MOCK_IDLE_MS, expiresAt)).toISOString(),
+  };
+}
 const DAY = 86_400_000;
 const HISTORY_DAYS = 180;
 
@@ -243,25 +261,27 @@ const purchased = (t: CreditTransaction) => (t.type === 'purchase' ? t.credits :
 const revenue = (p: PaymentRecord) => (p.status === 'paid' ? p.amountInr : 0);
 
 export const mockAdminApi: AdminApi = {
-  async sendOtp() {
+  async login(username, password) {
     await delay(null);
-  },
-  async verifyOtp(email, otp) {
-    if (otp !== MOCK_OTP) {
-      await delay(null);
-      throw new ApiError(401, 'Incorrect code. In mock mode the code is 123456.');
+    const name = username.trim().toLowerCase();
+    if (!name || password !== MOCK_PASSWORD) {
+      throw new ApiError(401, 'Invalid username or password.');
     }
-    return delay({
-      token: 'mock-token',
-      expiresAt: new Date(Date.now() + 8 * 3_600_000).toISOString(),
-      admin: { id: 'adm_mock', email, role: 'owner' as const },
-    });
+    mockSignedInAs = name;
+    mockSessionStartedAt = Date.now();
+    return mockSession(name);
   },
-  me() {
-    return delay({ id: 'adm_mock', email: 'admin@example.com', role: 'owner' as const });
+  async me() {
+    await delay(null);
+    if (!mockSignedInAs || Date.now() >= mockSessionStartedAt + MOCK_SESSION_MS) {
+      mockSignedInAs = null;
+      throw new ApiError(401, 'Authentication required.');
+    }
+    return mockSession(mockSignedInAs);
   },
   async logout() {
     await delay(null);
+    mockSignedInAs = null;
   },
 
   overview(range) {

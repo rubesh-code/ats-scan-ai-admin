@@ -1,7 +1,6 @@
 import { request } from '@/api/client';
 import type {
   AdminSession,
-  AdminUser,
   CreditSummary,
   CreditTransaction,
   CreditTransactionType,
@@ -21,14 +20,26 @@ import type {
   AccountStatus,
 } from '@/api/types';
 
+/** For calls that run automatically rather than because the admin did something. */
+export type CallOptions = { background?: boolean };
+
 /**
  * Every call the dashboard makes. Pages import `adminApi` and never call
  * `fetch` themselves, so the mock implementation can stand in for all of it.
+ *
+ * The three auth calls are the auth service's actual contract
+ * (auth-service/src/app.ts). The data calls are specified in
+ * docs/admin-api.md and are not implemented by any backend yet.
  */
 export type AdminApi = {
-  sendOtp(email: string): Promise<void>;
-  verifyOtp(email: string, otp: string): Promise<AdminSession>;
-  me(): Promise<AdminUser>;
+  /** POST /api/admin/auth/login. Sets the HttpOnly session cookie. */
+  login(username: string, password: string): Promise<AdminSession>;
+  /**
+   * GET /api/admin/auth/me. `startup` marks the initial check, where a 401
+   * just means "not signed in" rather than "session expired".
+   */
+  me(options?: CallOptions & { startup?: boolean }): Promise<AdminSession>;
+  /** POST /api/admin/auth/logout. Deletes the session and clears the cookie. */
   logout(): Promise<void>;
 
   overview(range: RangeKey): Promise<Overview>;
@@ -42,25 +53,23 @@ export type AdminApi = {
   creditSummary(range: RangeKey): Promise<CreditSummary>;
   payments(query: ListQuery & { status?: PaymentStatus }): Promise<Page<PaymentRecord>>;
   paymentSummary(range: RangeKey): Promise<PaymentSummary>;
-  health(): Promise<SystemHealth>;
+  health(options?: CallOptions): Promise<SystemHealth>;
 };
 
 export const httpAdminApi: AdminApi = {
-  async sendOtp(email) {
-    await request('/api/admin/auth/send-otp', { method: 'POST', body: { email }, auth: false });
-  },
-  verifyOtp(email, otp) {
-    return request('/api/admin/auth/verify-otp', {
+  login(username, password) {
+    // A 401 here is a wrong password, not an expired session.
+    return request('/api/admin/auth/login', {
       method: 'POST',
-      body: { email, otp },
-      auth: false,
+      body: { username, password },
+      signOutOn401: false,
     });
   },
-  me() {
-    return request('/api/admin/me');
+  me({ background = false, startup = false } = {}) {
+    return request('/api/admin/auth/me', { background, signOutOn401: !startup });
   },
   async logout() {
-    await request('/api/admin/auth/logout', { method: 'POST' });
+    await request('/api/admin/auth/logout', { method: 'POST', signOutOn401: false });
   },
 
   overview(range) {
@@ -90,7 +99,7 @@ export const httpAdminApi: AdminApi = {
   paymentSummary(range) {
     return request('/api/admin/payments/summary', { query: { range } });
   },
-  health() {
-    return request('/api/admin/health');
+  health({ background = false } = {}) {
+    return request('/api/admin/health', { background });
   },
 };

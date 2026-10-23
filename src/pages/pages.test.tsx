@@ -25,7 +25,7 @@ describe('Users page', () => {
       const items = search ? all.filter((u) => u.email.includes(search)) : all;
       return { items, page: 1, pageSize: 25, total: items.length };
     });
-    renderApp('/users', { api: fakeApi({ users }), signedIn: true });
+    renderApp('/users', { api: fakeApi({ users }) });
 
     const table = await screen.findByRole('table', { name: 'Users' });
     expect(within(table).getByText('user1@example.com')).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('Users page', () => {
     const users = vi.fn(async () => {
       throw new ApiError(404, 'Not found');
     });
-    renderApp('/users', { api: fakeApi({ users }), signedIn: true });
+    renderApp('/users', { api: fakeApi({ users }) });
     expect(await screen.findByRole('alert')).toHaveTextContent('not available on the backend yet');
   });
 });
@@ -68,7 +68,6 @@ describe('Revenue page', () => {
         paymentSummary: vi.fn(async () => summary),
         payments: vi.fn(async () => ({ items: [], page: 1, pageSize: 25, total: 0 })),
       }),
-      signedIn: true,
     });
 
     expect(await screen.findByText('₹12,450')).toBeInTheDocument();
