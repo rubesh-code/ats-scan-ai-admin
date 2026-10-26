@@ -99,7 +99,8 @@ describe('payments', () => {
       providerPaymentId: 'pay_3',
       packageName: null,
     });
-    expect(r().payments({ ...list, search: 'cf_order_2', status: null }).items.map((p) => p.id)).toEqual(['p2']);
+    expect(items.find((p) => p.id === 'p2')).toMatchObject({ provider: 'cashfree', providerOrderId: 'order_cf2' });
+    expect(r().payments({ ...list, search: 'order_cf2', status: null }).items.map((p) => p.id)).toEqual(['p2']);
   });
 
   it('summarises a range; refunds stay "not tracked"', () => {

@@ -32,7 +32,7 @@ How production data is read:
 |---|---|
 | scan `completed` / `failed` | `scans.status = 'Completed'` / anything else |
 | credit type `rewrite` | `credit_transactions.type = 'resume_rewrite'` |
-| payment provider and order id | `payments.payment_gateway`, then the Cashfree or Razorpay order id |
+| payment provider and ids | `payments.payment_gateway`; ids from `razorpay_order_id` / `razorpay_payment_id`, which Cashfree orders use too (`cashfree_order_id` is preferred if ever filled) |
 | last active | latest scan, rewrite or verified OTP sign-in |
 | account `status` | always `active` (no column yet) |
 | failure reason, refunds, backend errors | `null` (not recorded yet) |

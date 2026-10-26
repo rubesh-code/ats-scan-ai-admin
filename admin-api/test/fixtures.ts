@@ -30,7 +30,8 @@ export function snapshot(): Snapshot {
     ],
     payments: [
       { id: 'p1', user_id: 'u1', package_id: 'k1', payment_gateway: 'cashfree', razorpay_order_id: null, razorpay_payment_id: null, cashfree_order_id: 'cf_order_1', amount_inr: 99, credits: 5, status: 'paid', created_at: daysAgo(20), verified_at: daysAgo(20, 11) },
-      { id: 'p2', user_id: 'u2', package_id: 'k1', payment_gateway: 'cashfree', razorpay_order_id: null, razorpay_payment_id: null, cashfree_order_id: 'cf_order_2', amount_inr: 99, credits: 5, status: 'created', created_at: daysAgo(2), verified_at: null },
+      // As production stores most Cashfree orders: the id in razorpay_order_id.
+      { id: 'p2', user_id: 'u2', package_id: 'k1', payment_gateway: 'cashfree', razorpay_order_id: 'order_cf2', razorpay_payment_id: null, cashfree_order_id: null, amount_inr: 99, credits: 5, status: 'created', created_at: daysAgo(2), verified_at: null },
       { id: 'p3', user_id: 'u2', package_id: 'gone', payment_gateway: null, razorpay_order_id: 'order_3', razorpay_payment_id: 'pay_3', cashfree_order_id: null, amount_inr: 249, credits: 30, status: 'paid', created_at: daysAgo(4), verified_at: daysAgo(4, 11) },
     ],
     packages: [{ id: 'k1', name: 'Starter · 5 credits' }],

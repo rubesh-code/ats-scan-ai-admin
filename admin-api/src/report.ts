@@ -116,8 +116,10 @@ function mapped(snapshot: Snapshot) {
       userId: row.user_id,
       userEmail: emailOf(row.user_id),
       provider,
-      providerOrderId: (provider === 'cashfree' ? row.cashfree_order_id : row.razorpay_order_id) ?? '',
-      providerPaymentId: provider === 'cashfree' ? null : row.razorpay_payment_id,
+      // Production stores Cashfree ids in the razorpay_* columns too; the
+      // cashfree_* ones are empty. Prefer a dedicated column when present.
+      providerOrderId: row.cashfree_order_id ?? row.razorpay_order_id ?? '',
+      providerPaymentId: row.razorpay_payment_id,
       packageName: row.package_id ? (packages.get(row.package_id) ?? null) : null,
       amountInr: row.amount_inr,
       credits: row.credits,
