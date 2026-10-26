@@ -676,55 +676,6 @@ p.empty {
   background: var(--series-1);
 }
 
-/* ---------- Login ---------- */
-
-.login {
-  display: grid;
-  place-items: center;
-  min-height: 100vh;
-  padding: 24px 16px;
-}
-.login-card {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: min(400px, 100%);
-  padding: 28px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-.login-card form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.login-card p {
-  margin: 0;
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-.field input {
-  height: 42px;
-  font-weight: 400;
-}
-.form-error {
-  color: var(--critical-text);
-  font-size: 0.9rem;
-}
-.mock-hint {
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-3);
-  color: var(--ink-2);
-  font-size: 0.85rem;
-}
-
 /* ---------- Narrow screens ---------- */
 
 @media (max-width: 860px) {
