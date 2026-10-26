@@ -1,0 +1,25 @@
+{
+  "name": "ats-admin-api",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Read-only data API for the ATS Scan AI admin dashboard. Loopback only; reached through nginx behind Cloudflare Access.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^5.12.7",
+    "jose": "^6.2.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

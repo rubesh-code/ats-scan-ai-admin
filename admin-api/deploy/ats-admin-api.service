@@ -1,0 +1,53 @@
+# /etc/systemd/system/ats-admin-api.service
+#
+# Listens on 127.0.0.1:5080; nginx forwards /api/admin/ to it. Any local
+# process can connect, but every request still needs a valid Cloudflare
+# Access token for an allowed email, so connecting alone gets nothing.
+#
+# Layout (root-owned, read-only to the service):
+#   /opt/ats-admin-api/bin/node              Node 22 (the system node is 20)
+#   /opt/ats-admin-api/releases/<sha>/       dist/, node_modules/, package.json
+#   /opt/ats-admin-api/current -> releases/<sha>
+#   /etc/ats-admin-api/env                   0600 root; see env.example
+
+[Unit]
+Description=ATS Scan AI admin data API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/ats-admin-api/current
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/ats-admin-api/env
+ExecStart=/opt/ats-admin-api/bin/node /opt/ats-admin-api/current/dist/server.js
+Restart=on-failure
+RestartSec=5
+
+# Sandboxing
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# Inbound from nginx on loopback; outbound HTTPS to Supabase and Cloudflare.
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+UMask=0077
+# V8's JIT needs writable+executable memory, so MemoryDenyWriteExecute stays off.
+
+[Install]
+WantedBy=multi-user.target
