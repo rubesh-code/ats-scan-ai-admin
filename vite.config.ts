@@ -59,8 +59,8 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
       css: false,
-      // auth-service/ is a separate Node package with its own test runner config.
-      exclude: [...configDefaults.exclude, 'auth-service/**'],
+      // auth-service/ and admin-api/ are separate Node packages with their own test runner configs.
+      exclude: [...configDefaults.exclude, 'auth-service/**', 'admin-api/**'],
     },
   };
 });

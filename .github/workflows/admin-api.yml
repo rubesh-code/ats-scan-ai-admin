@@ -1,0 +1,62 @@
+# Verification for admin-api/.
+#
+# No secrets, no database, no network beyond npm: tests use fixtures, fake
+# Supabase responses and locally generated Cloudflare Access keys.
+name: admin-api
+
+on:
+  push:
+    # Feature branches too: workflow_dispatch only works once this file is on
+    # the default branch, so without this a feature push would run nothing.
+    branches: [main, 'feature/**']
+    # src/api/types.ts is the dashboard's contract, checked by test/contract.test.ts.
+    paths: ['admin-api/**', 'src/api/types.ts', '.github/workflows/admin-api.yml']
+  pull_request:
+    paths: ['admin-api/**', 'src/api/types.ts', '.github/workflows/admin-api.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Linux, Node 22
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: admin-api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.16.0'
+          cache: npm
+          cache-dependency-path: admin-api/package-lock.json
+
+      - run: npm ci
+
+      # Includes the contract check against the dashboard's src/api/types.ts.
+      - run: npm run typecheck
+
+      - name: Tests, none skipped
+        run: |
+          npx vitest run --reporter=default --reporter=json --outputFile="$RUNNER_TEMP/vitest.json"
+          node -e '
+            const r = require(process.argv[1]);
+            const skipped = r.numPendingTests + r.numTodoTests;
+            if (skipped > 0) { console.error(`${skipped} test(s) were skipped`); process.exit(1); }
+            console.log(`${r.numPassedTests} passed, none skipped`);
+          ' "$RUNNER_TEMP/vitest.json"
+
+      - run: npm run build
+
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
